@@ -2,7 +2,7 @@ local curspriteRam = 0x030001AC --当前活动块数据起始
 local aranRam = 0x030013D4 --角色数据起始
 local bulletRam = 0x03000A2C --弹丸数据起始
 local aranDecide = 0x030015D8 --角色的判定
-local XScrolloffset = 0x03000144 --水平卷轴偏移start
+local XScrolloffset = 0x030013B8 --水平卷轴偏移start
 local gameMode = 0x03000C70	--检查in-game
 local powerbomeRam = 0x03000130 --PB数据起始
 
@@ -112,4 +112,4 @@ while true do
 	end
 	vba.frameadvance()
 end
-		
+--by:jumuzhu-diwa	

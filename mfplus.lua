@@ -5,6 +5,61 @@ local aranDecide = 0x03001268 --角色的判定
 local XScrolloffset = 0x03001228 --水平卷轴偏移start
 local gameMode = 0x03000BDE	--检查in-game
 local powerbomeRam = 0x03000110 --PB数据起始
+local resourceData = 0x3001310 --资源数据 弹药 血量等
+--local damageHp = 0
+local oldHp = 0
+
+local function damageshow()
+	if memory.readbyte(aranRam + 0x5)==0 then --当阿兰没有无敌的时候
+		oldHp = memory.readword(resourceData)
+	end	
+	local invintime = memory.readbyte(aranRam+5)
+	if invintime~=0 then
+		local damageHp=oldHp - memory.readword(resourceData)
+		--根据偏移在屏幕上的坐标
+		local x = (memory.readword(aranRam+0x16)-memory.readword(XScrolloffset))/4
+		local y = (memory.readword(aranRam+0x18)-memory.readword(XScrolloffset+2))/4
+		--上判定框
+		local top = memory.readwordsigned(aranDecide+2)/4
+		
+		x = x - 3
+		
+		y = y+top-60+(memory.readbyte(aranRam+5)/2)
+		
+		gui.text(x,y,"-" .. damageHp,"green","black")
+	end
+end
+
+local function spriteinfos()
+	--定义第一行的开始坐标
+	local x=118
+	local y=10
+	gui.text(x,y,"ID NUM POSE   OAM    HP","white","red")
+	local i=0;
+	local line=0;
+	while (true) do
+		if(memory.readbyte(curspriteRam+(i*0x38))~=0) then
+			line=line+1
+			local strid=string.format("%02X",memory.readbyte(curspriteRam+0x1D+(i*0x38)))
+			local strpose=string.format("%02X",memory.readbyte(curspriteRam+0x24+(i*0x38)))
+			local stroam=string.format("%07X",memory.readdword(curspriteRam+0x18+(i*0x38))-0x8000000)
+			local strhp=string.format("%04X",memory.readword(curspriteRam+0x14+(i*0x38)))
+			local num=0
+			if(memory.readbyte(curspriteRam+0x32+(i*0x38))>=0x80) then
+				local strnum=string.format("%02X",memory.readbyte(curspriteRam+0x1E+(i*0x38)))
+				gui.text(x,y+line*6,strid.."-"..strnum.."   "..strpose.."  "..stroam.." "..strhp,"cyan","clear")
+			else
+				local strnum=string.format("%02X",memory.readbyte(curspriteRam+0x23+(i*0x38)))
+				gui.text(x,y+line*6,strid.."-"..strnum.."   "..strpose.."  "..stroam.." "..strhp,"green","clear")
+			end
+			
+		end
+		i=i+1
+		if (i>0x17) then
+			break
+		end
+	end
+end
 
 local function aran()
 	--根据偏移在屏幕上的坐标
@@ -58,7 +113,7 @@ local function sprites()
 			local y = (memory.readword(curspriteRam+0x2+0x38*(i-1))-memory.readword(XScrolloffset+2))/4
 			--判定大小
 			local top = (memory.readwordsigned(curspriteRam+0xA+0x38*(i-1)))/4
-			local down = (memory.readwordsiged(curspriteRam+0xC+0x38*(i-1)))/4
+			local down = (memory.readwordsigned(curspriteRam+0xC+0x38*(i-1)))/4
 			local left = (memory.readwordsigned(curspriteRam+0xE+0x38*(i-1)))/4
 			local right = (memory.readwordsigned(curspriteRam+0x10+0x38*(i-1)))/4
 			--活动块框体
@@ -105,6 +160,8 @@ end
 	
 while true do
 	if memory.readbyte(gameMode)==1 then
+		spriteinfos()
+		damageshow()
 		aran()
 		bullets()
 		sprites()
